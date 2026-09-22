@@ -1,0 +1,13 @@
+# Exclude datasets and cache files
+test/
+train/
+validation/
+*.cache
+
+# Exclude python cache and environment
+venv/
+.venv/
+__pycache__/
+*.pyc
+temp_input.jpg
+.vscode/
