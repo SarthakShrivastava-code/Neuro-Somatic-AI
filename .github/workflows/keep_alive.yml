@@ -1,10 +1,10 @@
-name: Keep Streamlit App Awake
+name: Keep Streamlit Apps Awake
 
 on:
   schedule:
-    # Runs every 2 days at midnight UTC to reset Streamlit's 7-day timer
-    - cron: '0 0 */2 * *'
-  workflow_dispatch: # Allows you to manually trigger it anytime from GitHub
+    # Runs every 4 hours to keep Streamlit containers perpetually warm
+    - cron: '0 */4 * * *'
+  workflow_dispatch: # Allows manual triggering anytime
 
 jobs:
   ping:
@@ -20,24 +20,33 @@ jobs:
           pip install playwright
           playwright install chromium
 
-      - name: Visit App with Headless Browser
+      - name: Visit Apps with Headless Browser
         run: |
           python -c "
           from playwright.sync_api import sync_playwright
           import time
 
+          urls = [
+              'https://neuro-somatic-ai-jk4evklermj6mycc5xtdyw.streamlit.app',
+              'https://autovaluate-ai-usedcarpriceprediction-l3tfxslygvxvwaxm3twrsp.streamlit.app',
+              'https://infesights-ai.streamlit.app'
+          ]
+
           with sync_playwright() as p:
               browser = p.chromium.launch(headless=True)
               page = browser.new_page()
-              print('Visiting app...')
-              page.goto('https://neuro-somatic-ai-jk4evklermj6mycc5xtdyw.streamlit.app')
-              
-              time.sleep(10)
-              wake_button = page.query_selector('button:has-text(\"Yes, get this app back up!\")')
-              if wake_button:
-                  print('App was sleeping, clicking Wake Up button...')
-                  wake_button.click()
-                  time.sleep(15)
-              print('Successfully kept app alive.')
+              for url in urls:
+                  print(f'Visiting {url}...')
+                  try:
+                      page.goto(url, timeout=60000)
+                      time.sleep(12)
+                      wake_button = page.query_selector('button:has-text(\"Yes, get this app back up!\")')
+                      if wake_button:
+                          print(f'App at {url} was sleeping, clicking Wake Up button...')
+                          wake_button.click()
+                          time.sleep(20)
+                      print(f'Successfully pinged {url}')
+                  except Exception as e:
+                      print(f'Error visiting {url}: {e}')
               browser.close()
           "
